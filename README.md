@@ -93,6 +93,8 @@ After installation:
 
 1. Press `Win + S`, type `Active Directory Users and Computers`, and press Enter
 	— or —
+	Press `Win + R`, type `dsa.msc`, and press Enter
+	— or —
 	Open **Server Manager → Tools → Active Directory Users and Computers**.
 
 2. Expand your domain (e.g., `lab.local`) to view existing containers.
@@ -109,12 +111,16 @@ After installation:
 	* `ITAdmins`
 	* `TestAccounts`
 
+---
+
 ### Step 3: Create Groups
 
 1. Right-click an OU (e.g., `ITAdmins`) → **New → Group**.
 2. Provide a **Group Name** (e.g., `Helpdesk`, `LocalAdmins`).
 3. Choose group scope/type (default: `Global / Security` is fine for now).
 4. Click **OK**.
+
+---
 
 ### Step 4: Create Users
 
@@ -132,6 +138,8 @@ Repeat for more users like:
 * `testuser2`
 * `adminuser`
 
+---
+
 ### Step 5: Add User to a Group
 
 1. Right-click the user you just created → **Add to a group...**.
@@ -140,7 +148,109 @@ Repeat for more users like:
 
 ## 🛠️ Phase 3: Configure Group Policy (GPO)
 
-## 🛠️ Phase 4: Logging & Auditing
+### Step 1: Open Group Policy Management
+
+1. Press `Win + R`, type `gpmc.msc`, and press Enter.
+	— or —
+	Press `Win + S`, type `Group Policy Management`, and press Enter
+	— or —
+	Go to **Server Manager → Tools → Group Policy Management**.
+
+2. Expand your forest and domain:
+
+---
+
+### Step 2: Create a New GPO
+
+1. Expand your domain.
+2. Right-click **Group Policy Objects** → **New**.
+3. Name your GPO (e.g., `PasswordPolicy`, `UserRestrictions`, `AuditPolicy`).
+4. Click **OK**.
+
+> You can create multiple GPOs based on purpose or keep all settings in one.
+
+---
+
+### Step 3: Edit the GPO
+
+1. Right-click your new GPO → **Edit**.
+2. Apply settings under:
+	* Navigate to `Computer Configuration → Policies → Windows Settings → Security Settings → Account Policies → Password Policy`
+		* Enforce password history: `24`
+		* Maximum password age: `30`
+		* Minimum password length: `12`
+		* Password must meet complexity requirements: `Enabled`
+	* Navigate to `Computer Configuration → Policies → Windows Settings → Security Settings → Advanced Audit Policy Configuration → Audit Policies`. 
+		* Logon: `Success`, `Failure`.
+		* Privilege Use: `Success`, `Failure`.
+
+---
+
+### Step 4: Link the GPO to an OU
+
+1. Right-click the OU (e.g., `LabUsers`) → **Link an Existing GPO**.
+2. Choose your GPO (e.g., `PasswordPolicy`) and click **OK**.
+
+### Step 5: Force & Verify Policy
+
+1. Open Command Prompt or PowerShell as Administrator and run:
+
+	```powershell
+	gpupdate /force
+	```
+
+2. Verify:
+
+	```powershell
+	auditpol /get /category:*
+	```
+
+3. Check logs in **Event Viewer → Windows Logs → Security**
+
+	Look for:
+
+	* `4624`: Successful login
+	* `4625`: Failed login
+	* `4672`: Admin privilege assigned
+
+## 🛠️ Phase 4: Set Up Logging Software on Local Host
+
+### Option 1: Use Built-in **Event Viewer**
+
+* Already logs security, system, and application events
+* No installation needed
+
+To view logs:
+
+* Press `Win + R`, type `eventvwr.msc`
+* Check:
+
+  * `Windows Logs → Security`
+  * `Windows Logs → System`
+
+---
+
+### Option 2: Enable Local Log File Archiving
+
+To store logs for long-term usage:
+
+1. Open Event Viewer → Right-click **Security**
+2. Choose **Properties**
+3. Increase log size (e.g., 128 MB)
+4. Enable **Overwrite events as needed**
+
+---
+
+### Option 3: Install Logging Tools (Optional)
+
+You can install third-party tools for better log management:
+
+#### 🔹 Example: NxLog or Sysmon (from Sysinternals)
+
+* **Sysmon** logs detailed process creation and network events
+* Must be manually installed via shared folder or ISO
+
+> These are optional for now — default Event Viewer is enough for basic auditing.
 
 ## 🛠️ Phase 5: PowerShell Script for System Info
 
