@@ -146,7 +146,7 @@ Repeat for more users like:
 2. Type the name of the group (e.g., `ITAdmins`) and click **Check Names**.
 3. Click **OK** to confirm.
 
-## 🛠️ Phase 3: Configure Group Policy (GPO)
+## 🛠️ Phase 3: Group Policy Configuration and Audit Policy Setup
 
 ### Step 1: Open Group Policy Management
 
@@ -245,7 +245,7 @@ To store logs for long-term usage:
 
 You can install third-party tools for better log management:
 
-#### 🔹 Example: NxLog or Sysmon (from Sysinternals)
+#### Example: NxLog or Sysmon (from Sysinternals)
 
 * **Sysmon** logs detailed process creation and network events
 * Must be manually installed via shared folder or ISO
@@ -254,7 +254,104 @@ You can install third-party tools for better log management:
 
 ## 🛠️ Phase 5: PowerShell Script for System Info
 
-## 🛠️ Phase 6: Harden Network (Disable LLMNR & NBT-NS)
+### Step 1: Create the Script
+
+1. Open **Notepad** or **PowerShell ISE**.
+2. Paste the following script:
+
+	```powershell
+	$date = Get-Date -Format "yyyy-MM-dd"
+
+	$logPath = "C:\Logs"
+	if (-not (Test-Path -Path $logPath)) {
+		New-Item -Path $logPath -ItemType Directory | Out-Null
+	}
+
+	Get-ComputerInfo | Out-File -FilePath "C:\Logs\systemdata_$date.txt"
+	```
+
+3. Save the file with `.ps1` extension:
+
+
+### Step 2: Run the Script
+
+1. Open **PowerShell** as Administrator.
+2. Navigate to the folder where your `.ps1` file is saved.
+3. Run the script:
+
+	```powershell
+	.\systeminfo_logger.ps1
+	```
+
+	This will:
+
+	* Create a folder `C:\Logs` if it doesn’t exist.
+	* Save system information to a file named:
+
+	```
+	C:\Logs\systemdata_YYYY-MM-DD.txt
+	```
+
+---
+
+### Step 3: Verify Output
+
+1. Go to `C:\Logs` directory.
+2. You should see a text file named something like:
+
+	`systemdata_2025-06-26.txt`
+3. Open the file — it will contain detailed information about:
+
+	* OS version
+	* BIOS
+	* Network interfaces
+	* System uptime
+	* Hardware details, and more
+
+## 🛠️ Phase 6: Disable LLMNR and NBT-NS to Reduce MITM Attack Surface
+
+### Step 1: Disable LLMNR via Group Policy
+
+1. Open **Group Policy Management**.
+2. Right-click **Group Policy Objects** → **New**.
+3. Name your GPO (e.g., `DisableLLMNR`).
+4. Right-click the GPO → **Edit**
+4. Navigate to `Computer Configuration → Policies  → Administrative Templates → Network → DNS Client`
+5. Find and double-click **Turn Off Multicast Name Resolution**.
+6. Select:
+
+	* **Enabled**
+	* Click **Apply** → **OK**
+
+---
+
+### Step 2: Disable NBT-NS (NetBIOS over TCP/IP)
+
+NetBIOS needs to be disabled **per network adapter** via GPO or manually.
+
+#### Option 1: Disable NBT-NS via Registry
+
+Create a PowerShell script and deploy it via GPO to disable NetBIOS:
+
+	```powershell
+	$adapters = Get-WmiObject Win32_NetworkAdapterConfiguration | Where-Object { $_.IPEnabled }
+
+	foreach ($adapter in $adapters) {
+		$adapter.SetTcpipNetbios(2)
+	}
+	```
+
+#### Option 2: Disable NBT-NS Manually
+
+1. Open **Network and Sharing Center**
+	→ Change adapter settings
+2. Right-click active adapter → **Properties**
+3. Select **Internet Protocol Version 4 (TCP/IPv4)** → Click **Properties**
+4. Click **Advanced** → Go to **WINS** tab
+5. Select:
+
+	* 🔘 **Disable NetBIOS over TCP/IP**
+6. Click **OK** on all dialogs.
 
 ## 🛠️ Phase 7: Red/Blue Team Recon & Attacks
 
