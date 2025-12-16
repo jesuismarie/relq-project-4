@@ -225,8 +225,8 @@ To view logs:
 * Press `Win + R`, type `eventvwr.msc`
 * Check:
 
-  * `Windows Logs → Security`
-  * `Windows Logs → System`
+	* `Windows Logs → Security`
+	* `Windows Logs → System`
 
 ---
 
@@ -272,7 +272,6 @@ You can install third-party tools for better log management:
 
 3. Save the file with `.ps1` extension:
 
-
 ### Step 2: Run the Script
 
 1. Open **PowerShell** as Administrator.
@@ -316,7 +315,7 @@ You can install third-party tools for better log management:
 2. Right-click **Group Policy Objects** → **New**.
 3. Name your GPO (e.g., `DisableLLMNR`).
 4. Right-click the GPO → **Edit**
-4. Navigate to `Computer Configuration → Policies  → Administrative Templates → Network → DNS Client`
+4. Navigate to `Computer Configuration → Policies → Administrative Templates → Network → DNS Client`
 5. Find and double-click **Turn Off Multicast Name Resolution**.
 6. Select:
 
@@ -333,13 +332,13 @@ NetBIOS needs to be disabled **per network adapter** via GPO or manually.
 
 Create a PowerShell script and deploy it via GPO to disable NetBIOS:
 
-	```powershell
-	$adapters = Get-WmiObject Win32_NetworkAdapterConfiguration | Where-Object { $_.IPEnabled }
+```powershell
+$adapters = Get-WmiObject Win32_NetworkAdapterConfiguration | Where-Object { $_.IPEnabled }
 
-	foreach ($adapter in $adapters) {
-		$adapter.SetTcpipNetbios(2)
-	}
-	```
+foreach ($adapter in $adapters) {
+	$adapter.SetTcpipNetbios(2)
+}
+```
 
 #### Option 2: Disable NBT-NS Manually
 
@@ -350,10 +349,5 @@ Create a PowerShell script and deploy it via GPO to disable NetBIOS:
 4. Click **Advanced** → Go to **WINS** tab
 5. Select:
 
-	* 🔘 **Disable NetBIOS over TCP/IP**
+	* **Disable NetBIOS over TCP/IP**
 6. Click **OK** on all dialogs.
-
-## 🛠️ Phase 7: Red/Blue Team Recon & Attacks
-
-## 🛠️ Phase 8: Advanced Attacks
-
